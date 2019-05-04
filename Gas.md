@@ -40,7 +40,7 @@ IMPORT void dummy_func() {
 }
 ```
 
-`dummy_func` `will never be called.
+`dummy_func` will never be called.
 `used` attribute makes sure the compiler will not eliminate the unused function while optimizing. and we can mangle the name `add_gas` and `dummy_func` dynamically before developer 
 will call it.
 if `add_gas` was mangled, make sure the instrisic function being changed correspondingly.
