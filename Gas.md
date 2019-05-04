@@ -59,6 +59,12 @@ emcc gas.c -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
 
 * get gas used : call GasVisitor::getGasUsed after invokeFunction.
 
+* run the module:  
+
+```
+./bin/wavm-run -d ../Examples/gas.wast
+```
+
 ## TODO
 
 * U64 supporting in native wasm
