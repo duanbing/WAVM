@@ -25,6 +25,9 @@
 #include "WAVM/WASM/WASM.h"
 #include "WAVM/WASTParse/WASTParse.h"
 
+#include "WAVM/WASTPrint/WASTPrint.h"
+#include "GasVisitContext.h"
+
 using namespace WAVM;
 using namespace WAVM::IR;
 using namespace WAVM::Runtime;
@@ -171,6 +174,33 @@ static int run(const CommandLineOptions& options)
 	if(!loadModule(options.filename, irModule)) { return EXIT_FAILURE; }
 	if(options.onlyCheck) { return EXIT_SUCCESS; }
 
+    bool found = false;
+    Uptr add_gas_func_index = 0;
+    for(add_gas_func_index = 0;
+            add_gas_func_index < irModule.functions.imports.size();
+            add_gas_func_index ++ ) {
+        auto import_func = irModule.functions.imports[add_gas_func_index];
+        if (import_func.exportName == "_add_gas" &&
+                import_func.moduleName == "env") {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        exit(-1);
+    }
+    for (auto& func_def : irModule.functions.defs)
+    {
+        GasVisitor gasVisitor(add_gas_func_index, irModule, func_def);
+        gasVisitor.AddGas();
+    }
+
+    std::string wastStr = WAST::print(irModule);
+    Log::printf(Log::debug,
+            "wasm with gas: %s\n",
+            wastStr.c_str());
+
 	// Compile the module.
 	Runtime::ModuleRef module = nullptr;
 	if(!options.precompiled) { module = Runtime::compileModule(irModule); }
@@ -213,6 +243,8 @@ static int run(const CommandLineOptions& options)
 			rootResolver.moduleNameToInstanceMap.set("asm2wasm", emscriptenInstance->asm2wasm);
 			rootResolver.moduleNameToInstanceMap.set("global", emscriptenInstance->global);
 		}
+        wavmAssert(emscriptenInstance);
+        Emscripten::setGasLimit(emscriptenInstance, INT_MAX);
 	}
 
 	if(options.enableThreadTest)
@@ -333,6 +365,13 @@ static int run(const CommandLineOptions& options)
 	Timing::Timer executionTimer;
 	IR::ValueTuple functionResults = invokeFunctionChecked(context, function, invokeArgs);
 	Timing::logTimer("Invoked function", executionTimer);
+
+	if(options.enableEmscripten)
+    {
+        Log::printf(Log::debug,
+                "gas used: %llu",
+                Emscripten::getGasUsed(emscriptenInstance));
+    }
 
 	if(options.functionName)
 	{

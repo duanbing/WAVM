@@ -510,7 +510,7 @@ Module::Module(const std::vector<U8>& objectBytes,
 
 		// Get the DWARF line info for this symbol, which maps machine code addresses to
 		// WebAssembly op indices.
-#if LLVM_VERSION_MAJOR >= 9
+#if LLVM_VERSION_MAJOR >= 9 and !defined(__APPLE__)
 		llvm::Expected<llvm::object::section_iterator> section = symbol.getSection();
 		if(!section) { continue; }
 		llvm::DILineInfoTable lineInfoTable = dwarfContext->getLineInfoForAddressRange(

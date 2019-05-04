@@ -119,12 +119,15 @@ DEFINE_INTRINSIC_GLOBAL(env, "EMTSTACKTOP", U32, EMTSTACKTOP, 0)
 DEFINE_INTRINSIC_GLOBAL(env, "EMT_STACK_MAX", U32, EMT_STACK_MAX, 0)
 DEFINE_INTRINSIC_GLOBAL(env, "eb", I32, eb, 0)
 
+static thread_local U64 gasUsed, gasLimit;
 static Emscripten::Instance* getEmscriptenInstance(Runtime::ContextRuntimeData* contextRuntimeData)
 {
 	auto instance = (Emscripten::Instance*)getUserData(
 		getCompartmentFromContextRuntimeData(contextRuntimeData));
 	wavmAssert(instance);
 	wavmAssert(instance->memory);
+    gasUsed = 0;
+    gasLimit = LLONG_MAX;
 	return instance;
 }
 
@@ -889,3 +892,29 @@ void Emscripten::injectCommandArgs(Emscripten::Instance* instance,
 	argvOffsets[argStrings.size()] = 0;
 	outInvokeArgs = {(U32)argStrings.size(), (U32)((U8*)argvOffsets - memoryBase)};
 }
+
+
+void Emscripten::setGasLimit(Emscripten::Instance* instance, U64 _gaslimit) {
+    gasUsed = 0;
+    gasLimit = _gaslimit;
+}
+
+U64 Emscripten::getGasUsed(Emscripten::Instance* instance) {
+    return gasUsed;
+}
+
+DEFINE_INTRINSIC_FUNCTION(env, "_add_gas", void, add_gas, U32 gas_low, U32 gas_high)
+{
+    /*
+    printf("add_gas intrinsic: used: %llu, limit=%llu, gas=%u, %u\n", gasUsed,
+         gasLimit, gas_low, gas_high);
+         */
+    U64 gas = gas_low | (U64(gas_high) << 32);
+    if(gasUsed + gas > gasLimit) {
+        //trap this error
+        exit(-1);
+    }
+    gasUsed += gas;
+}
+
+

@@ -30,4 +30,7 @@ namespace WAVM { namespace Emscripten {
 	EMSCRIPTEN_API void injectCommandArgs(Emscripten::Instance* instance,
 										  const std::vector<const char*>& argStrings,
 										  std::vector<IR::Value>& outInvokeArgs);
+
+    EMSCRIPTEN_API void setGasLimit(Emscripten::Instance* instance, U64 gaslimit);
+    EMSCRIPTEN_API U64 getGasUsed(Emscripten::Instance* instance);
 }}

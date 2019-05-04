@@ -666,7 +666,7 @@ struct FunctionPrintContext
 		string += "\ncatch_all" INDENT_STRING;
 	}
 
-#define PRINT_OP(opcode, name, nameString, Imm, printOperands, requiredFeature)                    \
+#define PRINT_OP(opcode, name, nameString, Imm, printOperands, requiredFeature, ...)               \
 	void name(Imm imm)                                                                             \
 	{                                                                                              \
 		wavmAssert(module.featureSpec.requiredFeature);                                            \

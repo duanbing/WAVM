@@ -679,7 +679,7 @@ struct FunctionValidationContext
 		VALIDATE_INDEX(imm.elemSegmentIndex, module.elemSegments.size());
 	}
 
-#define VALIDATE_OP(opcode, name, nameString, Imm, signatureInitializer, requiredFeature)          \
+#define VALIDATE_OP(opcode, name, nameString, Imm, signatureInitializer, requiredFeature, ...)     \
 	void name(Imm imm)                                                                             \
 	{                                                                                              \
 		VALIDATE_FEATURE(nameString, requiredFeature);                                             \
