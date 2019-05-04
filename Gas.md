@@ -38,7 +38,6 @@ extern "C" void add_gas(uint64_t );
 IMPORT void dummy_func() {
 	add_gas(0);
 }
-
 ```
 
 `dummy_func` `will never be called.
@@ -52,7 +51,7 @@ For example:
 ```
 emcc gas.c -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
 ```
-`Oz`` option will do full optimization, so the memory section probably is omitted, so transfer wasm to wast and add a memory section.
+`Oz` option will do full optimization, so the memory section probably is omitted, so transfer wasm to wast and add a memory section.
 
 * insert metering instructions : insert add_gas call after branch instruction. call GasVisitor::addGas.
 
