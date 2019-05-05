@@ -21,7 +21,7 @@ and insert metering instructions behind.
 
 ## Implementation
 
-Gas cost table refers to [ewasm project](https://github.com/ewasm/design/blob/master/determining_wasm_gas_costs.md), but swappable.
+Gas cost table refers to [ewasm project](https://github.com/ewasm/design/blob/master/determining_wasm_gas_costs.md), but swappable. Cost table support MVP only now.
 
 The main process is like below:
 
@@ -41,8 +41,7 @@ IMPORT void dummy_func() {
 ```
 
 `dummy_func` will never be called.
-`used` attribute makes sure the compiler will not eliminate the unused function while optimizing. and we can mangle the name `add_gas` and `dummy_func` dynamically before developer 
-will call it.
+`used` attribute makes sure the compiler will not eliminate the unused function while optimizing. and we can mangle the name `add_gas` and `dummy_func` dynamically before developer call it.
 if `add_gas` was mangled, make sure the instrisic function being changed correspondingly.
 
 * compile c/c++ to wasm:  we can use [emscripten](https://emscripten.org/docs/introducing_emscripten/index.html) to compile the c/c++ source file to wasm format. 
@@ -55,16 +54,16 @@ emcc gas.c -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
 
 * insert metering instructions : insert add_gas call after branch instruction. call GasVisitor::addGas.
 
-* set gas limit: call GasVisitor::setGasLimit before invokeFunction. 
-
-* get gas used : call GasVisitor::getGasUsed after invokeFunction.
+* set gas limit: call Emscripten::setGasLimit before invokeFunction. 
 
 * run the module:  
 
 ```
 ./bin/wavm-run -d ../Examples/gas.wast
 ```
+* get gas used : call Emscripten::getGasUsed after invokeFunction.
 
 ## TODO
 
-* U64 supporting in native wasm
+* I64 supporting in native wasm
+* Gas cost for post-MVP
