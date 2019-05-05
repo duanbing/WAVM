@@ -71,9 +71,9 @@ struct GasVisitor {
         // BUG : type converting forcefully
         //* https://webassembly.github.io/spec/core/syntax/values.html#syntax-int
         //* https://github.com/emscripten-core/emscripten/issues/7637
-        wavmAssert(gasCounter < UINT_MAX);
+        wavmAssert(gasCounter < UINT32_MAX);
 
-        U32 gas_low = U32(gasCounter & UINT_MAX);
+        U32 gas_low = U32(gasCounter & UINT32_MAX);
         U32 gas_high = U32(gasCounter>>32);
         encoderStream->i32_const({I32(gas_low)});
         encoderStream->i32_const({I32(gas_high)});

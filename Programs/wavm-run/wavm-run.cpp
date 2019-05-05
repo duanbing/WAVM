@@ -244,7 +244,7 @@ static int run(const CommandLineOptions& options)
 			rootResolver.moduleNameToInstanceMap.set("global", emscriptenInstance->global);
 		}
         wavmAssert(emscriptenInstance);
-        Emscripten::setGasLimit(emscriptenInstance, INT_MAX);
+        Emscripten::setGasLimit(emscriptenInstance, UINT32_MAX);
 	}
 
 	if(options.enableThreadTest)
