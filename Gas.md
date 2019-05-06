@@ -52,7 +52,7 @@ emcc gas.c -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
 ```
 `Oz` option will do full optimization, so the memory section probably is omitted, so transfer wasm to wast and add a memory section.
 
-* insert metering instructions : insert add_gas call after branch instruction. call GasVisitor::addGas.
+* insert metering instructions : insert add_gas call after branch instruction. call GasVisitor::addGas. code is [here](https://github.com/duanbing/WAVM/blob/master/Programs/wavm-run/GasVisitContext.h)
 
 * set gas limit: call Emscripten::setGasLimit before invokeFunction. 
 
