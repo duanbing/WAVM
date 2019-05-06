@@ -20,14 +20,14 @@
 // Enumerate the WebAssembly operators
 
 #define ENUM_CONTROL_OPERATORS(visitOp)                                                                                                                     \
-	visitOp(0x0002, block              , "block"                            , ControlStructureImm       , PARAMETRIC           , mvp                    , 1)   \
-	visitOp(0x0003, loop               , "loop"                             , ControlStructureImm       , PARAMETRIC           , mvp                    , 1)   \
-	visitOp(0x0004, if_                , "if"                               , ControlStructureImm       , PARAMETRIC           , mvp                    , 1)   \
-	visitOp(0x0005, else_              , "else"                             , NoImm                     , PARAMETRIC           , mvp                    , 90)   \
-	visitOp(0x000b, end                , "end"                              , NoImm                     , PARAMETRIC           , mvp                    , 1)   \
-	visitOp(0xfb02, try_               , "try"                              , ControlStructureImm       , PARAMETRIC           , exceptionHandling      , 1)   \
-	visitOp(0xfb03, catch_             , "catch"                            , ExceptionTypeImm          , PARAMETRIC           , exceptionHandling      , 1)   \
-	visitOp(0xfb04, catch_all          , "catch_all"                        , NoImm                     , PARAMETRIC           , exceptionHandling      , 1)
+	visitOp(0x0002, block              , "block"                            , ControlStructureImm       , PARAMETRIC           , mvp                    , 0)   \
+	visitOp(0x0003, loop               , "loop"                             , ControlStructureImm       , PARAMETRIC           , mvp                    , 0)   \
+	visitOp(0x0004, if_                , "if"                               , ControlStructureImm       , PARAMETRIC           , mvp                    , 0)   \
+	visitOp(0x0005, else_              , "else"                             , NoImm                     , PARAMETRIC           , mvp                    , 90)  \
+	visitOp(0x000b, end                , "end"                              , NoImm                     , PARAMETRIC           , mvp                    , 0)   \
+	visitOp(0xfb02, try_               , "try"                              , ControlStructureImm       , PARAMETRIC           , exceptionHandling      , 0)   \
+	visitOp(0xfb03, catch_             , "catch"                            , ExceptionTypeImm          , PARAMETRIC           , exceptionHandling      , 0)   \
+	visitOp(0xfb04, catch_all          , "catch_all"                        , NoImm                     , PARAMETRIC           , exceptionHandling      , 0)
 
 #define ENUM_PARAMETRIC_OPERATORS(visitOp)                                                                                                                  \
 /* Control flow                                                                                                                                          */ \
@@ -53,8 +53,8 @@
     visitOp(0xfc0f, table_grow         , "table.grow"                       , TableImm                  , PARAMETRIC           , referenceTypes         , 120)   \
 	visitOp(0xfc11, table_fill         , "table.fill"                       , TableImm                  , PARAMETRIC           , referenceTypes         , 120)   \
 /* Exceptions                                                                                                                                            */ \
-	visitOp(0xfb00, throw_             , "throw"                            , ExceptionTypeImm          , PARAMETRIC           , exceptionHandling      , 1)   \
-	visitOp(0xfb01, rethrow            , "rethrow"                          , RethrowImm                , PARAMETRIC           , exceptionHandling      , 1)
+	visitOp(0xfb00, throw_             , "throw"                            , ExceptionTypeImm          , PARAMETRIC           , exceptionHandling      , 0)   \
+	visitOp(0xfb01, rethrow            , "rethrow"                          , RethrowImm                , PARAMETRIC           , exceptionHandling      , 0)
 
 #define ENUM_NONCONTROL_NONPARAMETRIC_OPERATORS(visitOp)                                                                                                    \
 	visitOp(0x0001, nop                , "nop"                              , NoImm                     , NONE                 , mvp                    , 1)   \
@@ -83,7 +83,7 @@
 	visitOp(0x003d, i64_store16        , "i64.store16"                      , LoadOrStoreImm<1>         , STORE(i64)           , mvp                    , 120)   \
 	visitOp(0x003e, i64_store32        , "i64.store32"                      , LoadOrStoreImm<2>         , STORE(i64)           , mvp                    , 120)   \
 	visitOp(0x003f, memory_size        , "memory.size"                      , MemoryImm                 , NULLARY(i32)         , mvp                    , 120)   \
-	visitOp(0x0040, memory_grow        , "memory.grow"                      , MemoryImm                 , UNARY(i32,i32)       , mvp                    , 120)   \
+	visitOp(0x0040, memory_grow        , "memory.grow"                      , MemoryImm                 , UNARY(i32,i32)       , mvp                    , 10000)   \
 /* Literals                                                                                                                                              */ \
 	visitOp(0x0041, i32_const          , "i32.const"                        , LiteralImm<I32>           , NULLARY(i32)         , mvp                    , 1)   \
 	visitOp(0x0042, i64_const          , "i64.const"                        , LiteralImm<I64>           , NULLARY(i64)         , mvp                    , 1)   \

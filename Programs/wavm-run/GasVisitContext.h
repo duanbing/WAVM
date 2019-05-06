@@ -54,7 +54,7 @@ struct GasVisitor {
 #define VISIT_OP(encoding, name, nameString, Imm, _4, _5, gas)  \
     I64 name(Imm imm) {                                         \
         gasCounter += gas;                                      \
-        opEmiters.push_back(                                   \
+        opEmiters.push_back(                                    \
                 [imm](CodeStream *codeStream){                  \
                 codeStream->name(imm); });                      \
         return 0;                                               \
