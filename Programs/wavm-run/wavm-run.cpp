@@ -26,7 +26,7 @@
 #include "WAVM/WASTParse/WASTParse.h"
 
 #include "WAVM/WASTPrint/WASTPrint.h"
-#include "GasVisitContext.h"
+#include "gas-visit-context.h"
 
 using namespace WAVM;
 using namespace WAVM::IR;
@@ -188,6 +188,7 @@ static int run(const CommandLineOptions& options)
     }
 
     if (!found) {
+        printf("can not find  the add gas function\n");
         exit(-1);
     }
     for (auto& func_def : irModule.functions.defs)
