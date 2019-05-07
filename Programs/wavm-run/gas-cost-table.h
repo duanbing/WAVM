@@ -21,7 +21,7 @@ std::map<std::string, uint32_t> kGasCostTable = {
   {"drop"                        , 120       },
   {"drop_keep"                   , 1         },
   {"elem.drop"                   , 1         },
-  {"else"                        , 90        },
+  {"else"                        , 0         },
   {"end"                         , 0         },
   {"f32.abs"                     , 1         },
   {"f32.add"                     , 1         },

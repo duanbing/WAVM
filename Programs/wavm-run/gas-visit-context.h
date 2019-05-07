@@ -39,8 +39,9 @@ struct GasVisitor {
 
     void put_trap()
     {
-        //printf("gas=%d, size=%lu\n",gasCounter, opEmiters.size());
         if (opEmiters.size() == 0) {
+            printf("gas=%llu, size=%lu\n",gasCounter, opEmiters.size());
+            gasCounter = 0;
             return;
         }
         insert_inst();
@@ -109,10 +110,9 @@ struct GasVisitor {
     {
         put_trap();
         encoderStream->loop(imm);
-        //gasCounter += gas;
 	switch(Opcode::loop)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -124,10 +124,9 @@ struct GasVisitor {
     {
         put_trap();
         encoderStream->if_(imm);
-        //gasCounter += gas;
 	switch(Opcode::if_)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -142,10 +141,9 @@ struct GasVisitor {
 	{
         put_trap();
         encoderStream->else_(imm);
-        //gasCounter += gas;
 	switch(Opcode::else_)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -158,10 +156,9 @@ struct GasVisitor {
 	{
         put_trap();
         encoderStream->end(imm);
-        //gasCounter += gas;
 	switch(Opcode::end)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -174,10 +171,9 @@ struct GasVisitor {
     {
         put_trap();
         encoderStream->try_(imm);
-        //gasCounter += gas;
 	switch(Opcode::try_)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -185,14 +181,14 @@ struct GasVisitor {
         pushControlStack(ControlContext::Type::try_, "");
         return 0;
     }
+
 	I64 catch_(ExceptionTypeImm imm)
 	{
         put_trap();
         encoderStream->catch_(imm);
-        //gasCounter += gas;
 	switch(Opcode::catch_)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -200,14 +196,14 @@ struct GasVisitor {
         controlStack.back().type = ControlContext::Type::catch_;
         return 0;
 	}
+
 	I64 catch_all(NoImm imm)
 	{
         put_trap();
         encoderStream->catch_all(imm);
-        //gasCounter += gas;
 	switch(Opcode::catch_all)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -228,10 +224,9 @@ struct GasVisitor {
     {
         put_trap();
         encoderStream->br(imm);
-        //gasCounter += gas;
 	switch(Opcode::br)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -243,10 +238,9 @@ struct GasVisitor {
     {
         put_trap();
         encoderStream->br_if(imm);
-        //gasCounter += gas;
 	switch(Opcode::br_if)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -258,10 +252,9 @@ struct GasVisitor {
     {
         put_trap();
         encoderStream->br_table(imm);
-        //gasCounter += gas;
 	switch(Opcode::br_table)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -276,7 +269,7 @@ struct GasVisitor {
                 codeStream->return_(imm); });
 	switch(Opcode::return_)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -291,7 +284,7 @@ struct GasVisitor {
                 codeStream->call(imm); });
 	switch(Opcode::call)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -306,7 +299,7 @@ struct GasVisitor {
                 codeStream->call_indirect(imm); });
 	switch(Opcode::call_indirect)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -321,7 +314,7 @@ struct GasVisitor {
                 codeStream->drop(imm); });
 	switch(Opcode::drop)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -336,7 +329,7 @@ struct GasVisitor {
                 codeStream->select(imm); });
 	switch(Opcode::select)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -351,7 +344,7 @@ struct GasVisitor {
                 codeStream->local_set(imm); });
 	switch(Opcode::local_set)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -366,7 +359,7 @@ struct GasVisitor {
                 codeStream->local_get(imm); });
 	switch(Opcode::local_get)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -381,7 +374,7 @@ struct GasVisitor {
                 codeStream->local_tee(imm); });
 	switch(Opcode::local_tee)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -396,7 +389,7 @@ struct GasVisitor {
                 codeStream->global_set(imm); });
 	switch(Opcode::global_set)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -411,7 +404,7 @@ struct GasVisitor {
                 codeStream->global_get(imm); });
 	switch(Opcode::global_get)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -426,7 +419,7 @@ struct GasVisitor {
                 codeStream->table_get(imm); });
 	switch(Opcode::table_get)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -441,7 +434,7 @@ struct GasVisitor {
                 codeStream->table_get(imm); });
 	switch(Opcode::table_set)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -456,14 +449,13 @@ struct GasVisitor {
                 codeStream->table_grow(imm); });
 	switch(Opcode::table_grow)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
 	};
         return 0;
     }
-
 
     I64 table_fill(TableImm imm)
     {
@@ -472,7 +464,7 @@ struct GasVisitor {
                 codeStream->table_fill(imm); });
 	switch(Opcode::table_fill)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -487,7 +479,7 @@ struct GasVisitor {
                 codeStream->throw_(imm); });
 	switch(Opcode::throw_)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
@@ -502,7 +494,7 @@ struct GasVisitor {
                 codeStream->rethrow(imm); });
 	switch(Opcode::rethrow)
 	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4,_5)                                         \
+#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
 	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
 		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
 #undef VISIT_OPCODE
