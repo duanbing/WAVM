@@ -52,6 +52,15 @@ struct GasVisitor {
         opEmiters.clear();
     }
 
+    /*
+    std::map<std::string, bool> op_table_ = {
+#define VISIT_OPCODE(encoding, name, nameString, ...) \
+        {nameString, true},
+        ENUM_OPERATORS(VISIT_OPCODE)
+#undef VISIT_OPCODE
+    };
+    */
+
 
 #define VISIT_OP(encoding, name, nameString, Imm, _4, _5)       \
     I64 name(Imm imm) {                                         \
@@ -70,11 +79,8 @@ struct GasVisitor {
 
     void insert_inst()
     {
-        // BUG : type converting forcefully
-        //* https://webassembly.github.io/spec/core/syntax/values.html#syntax-int
-        //* https://github.com/emscripten-core/emscripten/issues/7637
-        wavmAssert(gasCounter < UINT32_MAX);
-
+        // https://webassembly.github.io/spec/core/syntax/values.html#syntax-int
+        // https://github.com/emscripten-core/emscripten/issues/7637
         U32 gas_low = U32(gasCounter & UINT32_MAX);
         U32 gas_high = U32(gasCounter>>32);
         encoderStream->i32_const({I32(gas_low)});
@@ -542,5 +548,13 @@ void GasVisitor::AddGas()
 	while(decoder && controlStack.size()){ decoder.decodeOp(*this); }
     encoderStream->finishValidation();
     functionDef.code = functionCodes.getBytes();
+
+    /*
+    for(auto it = op_table_.begin(); it != op_table_.end(); it++) {
+        if (kGasCostTable.find(it->first) == kGasCostTable.end()) {
+            printf("{\"%s\", 0}\n", it->first.data());
+        }
+    }
+    */
 }
 

@@ -15,6 +15,7 @@ std::map<std::string, uint32_t> kGasCostTable = {
   {"call_host"                   , 1         },
   {"call_indirect"               , 10000     },
   {"catch"                       , 0         },
+  {"catch_all"                   , 0         },
   {"data"                        , 1         },
   {"data.drop"                   , 1         },
   {"drop"                        , 120       },
@@ -396,6 +397,7 @@ std::map<std::string, uint32_t> kGasCostTable = {
   {"nop"                         , 1         },
   {"ref.is_null"                 , 1         },
   {"ref.null"                    , 1         },
+  {"ref.func"                    , 1         },
   {"rethrow"                     , 0         },
   {"return"                      , 90        },
   {"return_call"                 , 0         },
@@ -407,6 +409,7 @@ std::map<std::string, uint32_t> kGasCostTable = {
   {"table.init"                  , 1         },
   {"table.set"                   , 120       },
   {"table.size"                  , 120       },
+  {"table.fill"                  , 120       },
   {"throw"                       , 0         },
   {"try"                         , 0         },
   {"unreachable"                 , 1         },
@@ -419,4 +422,6 @@ std::map<std::string, uint32_t> kGasCostTable = {
   {"v128.store"                  , 1         },
   {"v128.xor"                    , 1         },
   {"v8x16.shuffle"               , 1         },
-}; 
+  {"v8x16.shuffle1"              , 1         },
+  {"v8x16.shuffle2_imm"          , 1         },
+};
