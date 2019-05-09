@@ -64,6 +64,5 @@ emcc gas.c -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
 * get gas used : call Emscripten::getGasUsed after invokeFunction.
 
 ## TODO
-
-* I64 supporting in native wasm
+* Insert imported function: add_gas instend of precompiled 
 * Gas cost for post-MVP

@@ -232,6 +232,11 @@ DEFINE_INTRINSIC_FUNCTION(env, "_sysconf", I32, _sysconf, I32 a)
 	}
 }
 
+DEFINE_INTRINSIC_FUNCTION(env, "_pthread_equal", I32, _pthread_equal, I32 a, I32 b)
+{
+	return a == b;
+}
+
 DEFINE_INTRINSIC_FUNCTION(env, "_pthread_cond_wait", I32, _pthread_cond_wait, I32 a, I32 b)
 {
 	return 0;

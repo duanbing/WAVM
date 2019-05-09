@@ -35,22 +35,22 @@ struct GasVisitor {
     IR::Module& module;
     IR::FunctionDef& functionDef;
 
-    std::vector<std::function<OperatorEmitFunc>> opEmiters;
+    std::vector<std::function<OperatorEmitFunc>> opEmitters;
 
     void put_trap()
     {
-        if (opEmiters.size() == 0) {
-            printf("gas=%llu, size=%lu\n",gasCounter, opEmiters.size());
+        if (opEmitters.size() == 0) {
+            printf("gas=%llu, size=%lu\n",gasCounter, opEmitters.size());
             gasCounter = 0;
             return;
         }
         insert_inst();
-        for(auto op : opEmiters)
+        for(auto op : opEmitters)
         {
             op(encoderStream);
         }
         gasCounter = 0;
-        opEmiters.clear();
+        opEmitters.clear();
     }
 
     /*
@@ -66,7 +66,7 @@ struct GasVisitor {
 #define VISIT_OP(encoding, name, nameString, Imm, _4, _5)       \
     I64 name(Imm imm) {                                         \
         gasCounter += kGasCostTable[nameString];                \
-        opEmiters.push_back(                                    \
+        opEmitters.push_back(                                    \
                 [imm](CodeStream *codeStream){                  \
                 codeStream->name(imm); });                      \
         return 0;                                               \
@@ -214,7 +214,7 @@ struct GasVisitor {
 
     I64 unreachable(NoImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->unreachable(imm); });
         return 0;
@@ -264,7 +264,7 @@ struct GasVisitor {
 
     I64 return_(NoImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->return_(imm); });
 	switch(Opcode::return_)
@@ -279,7 +279,7 @@ struct GasVisitor {
 
     I64 call(FunctionImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->call(imm); });
 	switch(Opcode::call)
@@ -294,7 +294,7 @@ struct GasVisitor {
 
     I64 call_indirect(CallIndirectImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->call_indirect(imm); });
 	switch(Opcode::call_indirect)
@@ -309,7 +309,7 @@ struct GasVisitor {
 
     I64 drop(NoImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->drop(imm); });
 	switch(Opcode::drop)
@@ -324,7 +324,7 @@ struct GasVisitor {
 
     I64 select(NoImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->select(imm); });
 	switch(Opcode::select)
@@ -339,7 +339,7 @@ struct GasVisitor {
 
     I64 local_set(GetOrSetVariableImm<false> imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->local_set(imm); });
 	switch(Opcode::local_set)
@@ -354,7 +354,7 @@ struct GasVisitor {
 
     I64 local_get(GetOrSetVariableImm<false> imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->local_get(imm); });
 	switch(Opcode::local_get)
@@ -369,7 +369,7 @@ struct GasVisitor {
 
     I64 local_tee(GetOrSetVariableImm<false> imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->local_tee(imm); });
 	switch(Opcode::local_tee)
@@ -384,7 +384,7 @@ struct GasVisitor {
 
     I64 global_set(GetOrSetVariableImm<true> imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->global_set(imm); });
 	switch(Opcode::global_set)
@@ -399,7 +399,7 @@ struct GasVisitor {
 
     I64 global_get(GetOrSetVariableImm<true> imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->global_get(imm); });
 	switch(Opcode::global_get)
@@ -414,7 +414,7 @@ struct GasVisitor {
 
     I64 table_get(TableImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->table_get(imm); });
 	switch(Opcode::table_get)
@@ -429,7 +429,7 @@ struct GasVisitor {
 
     I64 table_set(TableImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->table_get(imm); });
 	switch(Opcode::table_set)
@@ -444,7 +444,7 @@ struct GasVisitor {
 
     I64 table_grow(TableImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->table_grow(imm); });
 	switch(Opcode::table_grow)
@@ -459,7 +459,7 @@ struct GasVisitor {
 
     I64 table_fill(TableImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->table_fill(imm); });
 	switch(Opcode::table_fill)
@@ -474,7 +474,7 @@ struct GasVisitor {
 
     I64 throw_(ExceptionTypeImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->throw_(imm); });
 	switch(Opcode::throw_)
@@ -489,7 +489,7 @@ struct GasVisitor {
 
     I64 rethrow(RethrowImm imm)
     {
-        opEmiters.push_back(
+        opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->rethrow(imm); });
 	switch(Opcode::rethrow)
