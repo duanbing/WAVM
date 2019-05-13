@@ -1,14 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-
-
-#define IMPORT __attribute__((used)) __attribute__ ((visibility ("default")))
-extern "C" void add_gas(uint64_t );
-IMPORT void dummy_func() {
-	add_gas(0);
-}
-
 uint64_t sub(uint64_t b) {
 	return b - 10;
 }

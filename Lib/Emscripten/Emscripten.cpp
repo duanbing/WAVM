@@ -908,13 +908,9 @@ U64 Emscripten::getGasUsed(Emscripten::Instance* instance) {
     return gasUsed;
 }
 
-DEFINE_INTRINSIC_FUNCTION(env, "_add_gas", void, add_gas, U32 gas_low, U32 gas_high)
+DEFINE_INTRINSIC_FUNCTION(env, "__builtin_add_gas", void, add_gas, I64 gas)
 {
-    /*
-    printf("add_gas intrinsic: used: %llu, limit=%llu, gas=%u, %u\n", gasUsed,
-         gasLimit, gas_low, gas_high);
-         */
-    U64 gas = gas_low | (U64(gas_high) << 32);
+    //gas will be unsigned-promotion
     if(gasUsed + gas > gasLimit) {
         //trap this error
         exit(-1);

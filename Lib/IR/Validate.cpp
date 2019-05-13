@@ -18,7 +18,7 @@
 #include "WAVM/Inline/HashSet.h"
 #include "WAVM/Logging/Logging.h"
 
-#define ENABLE_LOGGING 0
+#define ENABLE_LOGGING 1
 
 using namespace WAVM;
 using namespace WAVM::IR;
@@ -248,7 +248,6 @@ struct FunctionValidationContext
 		// Log the start of the function and its signature+locals.
 		if(ENABLE_LOGGING)
 		{
-			logOperator("func");
 			for(auto param : functionType.params())
 			{ logOperator(std::string("param ") + asString(param)); }
 			for(auto result : functionType.results())

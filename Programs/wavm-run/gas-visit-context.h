@@ -23,11 +23,11 @@ typedef CodeValidationProxyStream<OperatorEncoderStream> CodeStream;
 typedef void OperatorEmitFunc(CodeStream*);
 
 struct GasVisitor {
-    typedef I64 Result;
+    typedef void Result;
     GasVisitor(Uptr idx, IR::Module& irModule, IR::FunctionDef& fd)
         : gasCounter(0), addGasFuncIndex(idx), module(irModule), functionDef(fd) {}
 
-    ~GasVisitor() { delete encoderStream; encoderStream = nullptr; }
+    ~GasVisitor() { if (encoderStream != nullptr) delete encoderStream; encoderStream = nullptr; }
 
     CodeStream *encoderStream;
     I64 gasCounter;  //trace gas used by current block
@@ -37,7 +37,7 @@ struct GasVisitor {
 
     std::vector<std::function<OperatorEmitFunc>> opEmitters;
 
-    void put_trap()
+    void gas_trap()
     {
         if (opEmitters.size() == 0) {
             printf("gas=%llu, size=%lu\n",gasCounter, opEmitters.size());
@@ -53,453 +53,253 @@ struct GasVisitor {
         opEmitters.clear();
     }
 
-    /*
-    std::map<std::string, bool> op_table_ = {
-#define VISIT_OPCODE(encoding, name, nameString, ...) \
-        {nameString, true},
-        ENUM_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-    };
-    */
-
-
 #define VISIT_OP(encoding, name, nameString, Imm, _4, _5)       \
-    I64 name(Imm imm) {                                         \
+    Result name(Imm imm) {                                      \
         gasCounter += kGasCostTable[nameString];                \
-        opEmitters.push_back(                                    \
+        opEmitters.push_back(                                   \
                 [imm](CodeStream *codeStream){                  \
                 codeStream->name(imm); });                      \
-        return 0;                                               \
     }
     ENUM_NONCONTROL_NONPARAMETRIC_OPERATORS(VISIT_OP)
 #undef VISIT_OP
 
-    I64 unknown(Opcode) {
-        return 0;
-    }
+    Result unknown(Opcode) {}
 
     void insert_inst()
     {
-        // https://webassembly.github.io/spec/core/syntax/values.html#syntax-int
-        // https://github.com/emscripten-core/emscripten/issues/7637
-        U32 gas_low = U32(gasCounter & UINT32_MAX);
-        U32 gas_high = U32(gasCounter>>32);
-        encoderStream->i32_const({I32(gas_low)});
-        encoderStream->i32_const({I32(gas_high)});
+        encoderStream->i64_const({gasCounter});
         encoderStream->call({addGasFuncIndex});
     }
 
-	I64 block(ControlStructureImm imm)
+	Result block(ControlStructureImm imm)
     {
-        put_trap();
+        gas_trap();
         encoderStream->block(imm);
-
-	switch(Opcode::block)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-
+        gasCounter += kGasCostTable["block"];
         pushControlStack(ControlContext::Type::block, "");
-        return 0;
+
     }
 
-	I64 loop(ControlStructureImm imm)
+	Result loop(ControlStructureImm imm)
     {
-        put_trap();
+        gas_trap();
         encoderStream->loop(imm);
-	switch(Opcode::loop)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
+        gasCounter += kGasCostTable["loop"];
         pushControlStack(ControlContext::Type::loop, "");
-        return 0;
+
     }
-	I64 if_(ControlStructureImm imm)
+	Result if_(ControlStructureImm imm)
     {
-        put_trap();
+        gas_trap();
         encoderStream->if_(imm);
-	switch(Opcode::if_)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
+        gasCounter += kGasCostTable["if_"];
         pushControlStack(ControlContext::Type::ifThen, "");
-        return 0;
+
     }
 
-	// If an else or end opcode would signal an end to the unreachable code, then pass it through to
-	// the IR emitter.
-	I64 else_(NoImm imm)
+	Result else_(NoImm imm)
 	{
-        put_trap();
+        gas_trap();
         encoderStream->else_(imm);
-	switch(Opcode::else_)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
+        gasCounter += kGasCostTable["else_"];
         controlStack.back().type = ControlContext::Type::ifElse;
-        return 0;
+
 	}
 
-	I64 end(NoImm imm)
+	Result end(NoImm imm)
 	{
-        put_trap();
+        gas_trap();
         encoderStream->end(imm);
-	switch(Opcode::end)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
+        gasCounter += kGasCostTable["end"];
         controlStack.pop_back();
-        return 0;
+
 	}
 
-	I64 try_(ControlStructureImm imm)
+	Result try_(ControlStructureImm imm)
     {
-        put_trap();
+        gas_trap();
         encoderStream->try_(imm);
-	switch(Opcode::try_)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
+        gasCounter += kGasCostTable["try_"];
         pushControlStack(ControlContext::Type::try_, "");
-        return 0;
+
     }
 
-	I64 catch_(ExceptionTypeImm imm)
+	Result catch_(ExceptionTypeImm imm)
 	{
-        put_trap();
+        gas_trap();
         encoderStream->catch_(imm);
-	switch(Opcode::catch_)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
+        gasCounter += kGasCostTable["catch_"];
         controlStack.back().type = ControlContext::Type::catch_;
-        return 0;
+
 	}
 
-	I64 catch_all(NoImm imm)
+	Result catch_all(NoImm imm)
 	{
-        put_trap();
+        gas_trap();
         encoderStream->catch_all(imm);
-	switch(Opcode::catch_all)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_CONTROL_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
+        gasCounter += kGasCostTable["catch_all"];
         controlStack.back().type = ControlContext::Type::catch_;
-        return 0;
+
 	}
 
-    I64 unreachable(NoImm imm)
+    Result unreachable(NoImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->unreachable(imm); });
-        return 0;
+
     }
 
-    I64 br(BranchImm imm)
+    Result br(BranchImm imm)
     {
-        put_trap();
+        gas_trap();
         encoderStream->br(imm);
-	switch(Opcode::br)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["br"];
+
     }
 
-    I64 br_if(BranchImm imm)
+    Result br_if(BranchImm imm)
     {
-        put_trap();
+        gas_trap();
         encoderStream->br_if(imm);
-	switch(Opcode::br_if)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["br_if"];
+
     }
 
-    I64 br_table(BranchTableImm imm)
+    Result br_table(BranchTableImm imm)
     {
-        put_trap();
+        gas_trap();
         encoderStream->br_table(imm);
-	switch(Opcode::br_table)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["br_table"];
+
     }
 
-    I64 return_(NoImm imm)
+    Result return_(NoImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->return_(imm); });
-	switch(Opcode::return_)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["return_"];
     }
 
-    I64 call(FunctionImm imm)
+    Result call(FunctionImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->call(imm); });
-	switch(Opcode::call)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["call"];
     }
 
-    I64 call_indirect(CallIndirectImm imm)
+    Result call_indirect(CallIndirectImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->call_indirect(imm); });
-	switch(Opcode::call_indirect)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["call_indirect"];
     }
 
-    I64 drop(NoImm imm)
+    Result drop(NoImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->drop(imm); });
-	switch(Opcode::drop)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["drop"];
     }
 
-    I64 select(NoImm imm)
+    Result select(NoImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->select(imm); });
-	switch(Opcode::select)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["select"];
     }
 
-    I64 local_set(GetOrSetVariableImm<false> imm)
+    Result local_set(GetOrSetVariableImm<false> imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->local_set(imm); });
-	switch(Opcode::local_set)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["local_set"];
     }
 
-    I64 local_get(GetOrSetVariableImm<false> imm)
+    Result local_get(GetOrSetVariableImm<false> imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->local_get(imm); });
-	switch(Opcode::local_get)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["local_get"];
     }
 
-    I64 local_tee(GetOrSetVariableImm<false> imm)
+    Result local_tee(GetOrSetVariableImm<false> imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->local_tee(imm); });
-	switch(Opcode::local_tee)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["local_tee"];
     }
 
-    I64 global_set(GetOrSetVariableImm<true> imm)
+    Result global_set(GetOrSetVariableImm<true> imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->global_set(imm); });
-	switch(Opcode::global_set)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["global_set"];
     }
 
-    I64 global_get(GetOrSetVariableImm<true> imm)
+    Result global_get(GetOrSetVariableImm<true> imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->global_get(imm); });
-	switch(Opcode::global_get)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["global_get"];
     }
 
-    I64 table_get(TableImm imm)
+    Result table_get(TableImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->table_get(imm); });
-	switch(Opcode::table_get)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["table_get"];
     }
 
-    I64 table_set(TableImm imm)
+    Result table_set(TableImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->table_get(imm); });
-	switch(Opcode::table_set)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["table_set"];
     }
 
-    I64 table_grow(TableImm imm)
+    Result table_grow(TableImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->table_grow(imm); });
-	switch(Opcode::table_grow)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["table_grow"];
     }
 
-    I64 table_fill(TableImm imm)
+    Result table_fill(TableImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->table_fill(imm); });
-	switch(Opcode::table_fill)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["table_fill"];
     }
 
-    I64 throw_(ExceptionTypeImm imm)
+    Result throw_(ExceptionTypeImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->throw_(imm); });
-	switch(Opcode::throw_)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["throw_"];
     }
 
-    I64 rethrow(RethrowImm imm)
+    Result rethrow(RethrowImm imm)
     {
         opEmitters.push_back(
                 [imm](CodeStream *codeStream){
                 codeStream->rethrow(imm); });
-	switch(Opcode::rethrow)
-	{
-#define VISIT_OPCODE(encoding, name, nameString, Imm, _4, _5)                                         \
-	case Opcode::name: gasCounter += kGasCostTable[nameString]; break;
-		ENUM_PARAMETRIC_OPERATORS(VISIT_OPCODE)
-#undef VISIT_OPCODE
-	};
-        return 0;
+        gasCounter += kGasCostTable["rethrow"];
     }
 
     void AddGas();
@@ -540,13 +340,4 @@ void GasVisitor::AddGas()
 	while(decoder && controlStack.size()){ decoder.decodeOp(*this); }
     encoderStream->finishValidation();
     functionDef.code = functionCodes.getBytes();
-
-    /*
-    for(auto it = op_table_.begin(); it != op_table_.end(); it++) {
-        if (kGasCostTable.find(it->first) == kGasCostTable.end()) {
-            printf("{\"%s\", 0}\n", it->first.data());
-        }
-    }
-    */
 }
-

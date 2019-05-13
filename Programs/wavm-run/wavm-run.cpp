@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "WAVM/Emscripten/Emscripten.h"
 #include "WAVM/IR/Module.h"
@@ -27,6 +28,7 @@
 
 #include "WAVM/WASTPrint/WASTPrint.h"
 #include "gas-visit-context.h"
+#include "insert-imported-context.h"
 
 using namespace WAVM;
 using namespace WAVM::IR;
@@ -174,23 +176,29 @@ static int run(const CommandLineOptions& options)
 	if(!loadModule(options.filename, irModule)) { return EXIT_FAILURE; }
 	if(options.onlyCheck) { return EXIT_SUCCESS; }
 
+    std::string exportFuncName = "__builtin_add_gas";
+
+    ImportFunctionInsertVisitor importFunctionInsertVisitor(irModule, exportFuncName);
+    importFunctionInsertVisitor.AddImportedFunc();
+
+    // double check
     bool found = false;
     Uptr add_gas_func_index = 0;
     for(add_gas_func_index = 0;
             add_gas_func_index < irModule.functions.imports.size();
             add_gas_func_index ++ ) {
         auto import_func = irModule.functions.imports[add_gas_func_index];
-        if (import_func.exportName == "_add_gas" &&
+        if (import_func.exportName == exportFuncName &&
                 import_func.moduleName == "env") {
             found = true;
             break;
         }
     }
-
     if (!found) {
         printf("can not find  the add gas function\n");
         exit(-1);
     }
+
     for (auto& func_def : irModule.functions.defs)
     {
         GasVisitor gasVisitor(add_gas_func_index, irModule, func_def);

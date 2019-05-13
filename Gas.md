@@ -29,20 +29,15 @@ The main process is like below:
 insert add_gas function -> compile c/c++ to wasm -> insert metering instructions -> set gas limit -> run wasm module 
 ```
 
-* insert add_gas function:  `add_gas` imported function should not be accessed by module developer, so to avoid adjust the index space of import section,
-we insert the `add_gas` after the c/c++ source file dynamically like this:
-
+* insert add_gas function:  `add_gas` imported function should not be accessed by module developer, so to avoid adjust the index space of import section, Inserting a imported function need update the function index space, which mean:
+those segment as below should be updated.
 ```
-#define IMPORT __attribute__((used)) __attribute__ ((visibility ("default")))
-extern "C" void add_gas(uint64_t );
-IMPORT void dummy_func() {
-	add_gas(0);
-}
+- IR::Module::exports
+- IR::Module::elemSegments
+- IR::Module::startFunctionIndex
+- IR::FunctionImm in the byte code for call instructions
 ```
-
-`dummy_func` will never be called.
-`used` attribute makes sure the compiler will not eliminate the unused function while optimizing. and we can mangle the name `add_gas` and `dummy_func` dynamically before developer call it.
-if `add_gas` was mangled, make sure the instrisic function being changed correspondingly.
+the implementation code is in `Programs/wavm-as/insert-imported-context.h`.
 
 * compile c/c++ to wasm:  we can use [emscripten](https://emscripten.org/docs/introducing_emscripten/index.html) to compile the c/c++ source file to wasm format. 
 

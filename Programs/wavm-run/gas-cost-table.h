@@ -413,7 +413,7 @@ std::map<std::string, uint32_t> kGasCostTable = {
   {"table.fill"                  , 100000         },
   {"throw"                       , 100000         },
   {"try"                         , 100000         },
-  {"unreachable"                 , 100000         },
+  {"unreachable"                 , 0              },
   {"v128.and"                    , 100000         },
   {"v128.bitselect"              , 100000         },
   {"v128.const"                  , 100000         },
