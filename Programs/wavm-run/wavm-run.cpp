@@ -178,7 +178,7 @@ static int run(const CommandLineOptions& options)
 
     std::string exportFuncName = "__builtin_add_gas";
 
-    ImportFunctionInsertVisitor importFunctionInsertVisitor(irModule, exportFuncName, nullptr);
+    ImportFunctionInsertVisitor importFunctionInsertVisitor(irModule, exportFuncName);
     importFunctionInsertVisitor.AddImportedFunc();
 
     // double check

@@ -21,9 +21,9 @@ and insert metering instructions behind.
 
 ## Implementation
 
-Gas cost table refers to [ewasm project](https://github.com/ewasm/design/blob/master/determining_wasm_gas_costs.md), but swappable. Cost table support MVP only now.
+Gas cost table had been referred to [ewasm project](https://github.com/ewasm/design/blob/master/determining_wasm_gas_costs.md), but swappable. Cost table support MVP only now.
 
-The main process is like below:
+This works as below:
 
 ```
 insert add_gas function -> compile c/c++ to wasm -> insert metering instructions -> set gas limit -> run wasm module 

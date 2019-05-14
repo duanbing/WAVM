@@ -16,8 +16,8 @@ template<typename InnerStream> struct OperatorStreamProxy
 
 struct ImportFunctionInsertVisitor : OperatorStreamProxy<CodeStream>
 {
-    ImportFunctionInsertVisitor(IR::Module& irModule, std::string name, CodeStream* inInnerStream) :
-        OperatorStreamProxy<CodeStream>(inInnerStream), module(irModule), exportName(name) {}
+    ImportFunctionInsertVisitor(IR::Module& irModule, std::string name) :
+        OperatorStreamProxy<CodeStream>(nullptr), module(irModule), exportName(name) {}
 
     ~ImportFunctionInsertVisitor() {}
     IR::Module& module;
