@@ -8,22 +8,27 @@ i64.const ${gas_counter}
 call $add_gas_func
 ```
 
-And add_gas_func accept one parameter gas_counter which is the sum of all the instruction's gas cost in currerent basic block, 
-
-declared as below:
+And `add_gas_func`` accepts one parameter `gas_counter` to count all the instruction's gas cost in currerent basic block, 
+which is declared as below:
 ```
 type (;1;) (func (param i32 i32))
 (import "env" "_add_gas" (func (;0;) (type 1)))
 ```
+in wast file.
 
 Then, walk all the branch instructions ([block, if, else, loop, br, br_if, br_table, loop, return, end]) per defined funtion in wasm module,
 and insert metering instructions behind.
 
 ## Implementation
 
-Gas cost table had been referred to [ewasm project](https://github.com/ewasm/design/blob/master/determining_wasm_gas_costs.md), but swappable. Cost table support MVP only now.
+Firstly we should figure out cycle costed by a instruction, and fill them in a gas cost table.
+Gas cost table had been referred to [ewasm project](https://github.com/ewasm/design/blob/master/determining_wasm_gas_costs.md), but swappable. 
+we also can use [llvm::getInstructionCost](https://reviews.llvm.org/D37170?id=113616) to re-evaluate the cycles costed.
 
-This works as below:
+Cost table supports MVP only now.
+
+
+This whole process run as below:
 
 ```
 insert add_gas function -> compile c/c++ to wasm -> insert metering instructions -> set gas limit -> run wasm module 
@@ -43,7 +48,7 @@ the implementation code is in `Programs/wavm-as/insert-imported-context.h`.
 
 For example:
 ```
-emcc gas.c -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
+emcc gas.cpp -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
 ```
 `Oz` option will do full optimization, so the memory section probably is omitted, so transfer wasm to wast and add a memory section.
 
@@ -58,6 +63,3 @@ emcc gas.c -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
 ```
 * get gas used : call Emscripten::getGasUsed after invokeFunction.
 
-## TODO
-* Insert imported function: add_gas instend of precompiled 
-* Gas cost for post-MVP
