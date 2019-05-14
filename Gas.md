@@ -1,29 +1,36 @@
 ## Motivation
 
-Metering the resoure cost of a wasm module instruction by instruction. The main idea is adding a metering function call
-at the beginning of each [basic block](https://en.wikipedia.org/wiki/Basic_block) as below:
+Metering the resource costed of a wasm module instruction by instruction. The main idea is to add a metering function call
+at the beginning of each [basic block](https://en.wikipedia.org/wiki/Basic_block), like
 
 ```
 i64.const ${gas_counter}
 call $add_gas_func
 ```
-
-And add_gas_func accept one parameter gas_counter which is the sum of all the instruction's gas cost in currerent basic block, 
-
-declared as below:
+the `add_gas_func`` accepts one parameter gas_counter to count all the instruction's gas cost of a basic block, 
+and declared as below:
 ```
 type (;1;) (func (param i32 i32))
 (import "env" "_add_gas" (func (;0;) (type 1)))
 ```
 
-Then, walk all the branch instructions ([block, if, else, loop, br, br_if, br_table, loop, return, end]) per defined funtion in wasm module,
+Then, walk all the branch instructions ([block, if, else, loop, br, br_if, br_table, loop, return, end]) by a stack in every defined funtion in wasm module,
 and insert metering instructions behind.
 
 ## Implementation
 
-Gas cost table had been referred to [ewasm project](https://github.com/ewasm/design/blob/master/determining_wasm_gas_costs.md), but swappable. Cost table support MVP only now.
+Firstly we have to measure the cost of each instruction. As all we know gas cost for IR is not precise, casue gas cost eventually be approximately  
+equal to latency and throughout of each instruction based on the target. There are some approches to fill in this gas cost table.
 
-This works as below:
+* [ewasm gas determing](https://github.com/ewasm/design/blob/master/determining_wasm_gas_costs.md), but swappable. 
+* Since we use llvm to compile and run the wasm, so, [llvm::getInstructionCost](https://reviews.llvm.org/D37170?id=113616) is also an optional 
+for gas cost evaluation.
+
+here we choose the first one as default, but we also have a small update accoding to [Instruction tables by Agner Fog](http://www.agner.org/optimize/instruction_tables.pdf).
+
+And we only support wasm-MVP instruction set now.
+
+The whole idea works as below:
 
 ```
 insert add_gas function -> compile c/c++ to wasm -> insert metering instructions -> set gas limit -> run wasm module 
@@ -57,7 +64,3 @@ emcc gas.c -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
 ./bin/wavm-run -d ../Examples/gas.wast
 ```
 * get gas used : call Emscripten::getGasUsed after invokeFunction.
-
-## TODO
-* Insert imported function: add_gas instend of precompiled 
-* Gas cost for post-MVP
