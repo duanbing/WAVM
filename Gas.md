@@ -16,8 +16,7 @@ type (;1;) (func (param i32 i32))
 ```
 in wast file.
 
-Then, walk all the branch instructions ([block, if, else, loop, br, br_if, br_table, loop, return, end]) by a stack in every defined funtion in wasm module,
-and insert metering instructions behind.
+Then, walk all the branch instructions ([block, if, else, loop, br, br_if, br_table, loop, return, end]) by a stack in every defined funtion of wasm module, and insert metering instructions behind.
 
 ## Implementation
 
