@@ -2,176 +2,89 @@
 
 typedef CodeValidationProxyStream<OperatorEncoderStream> CodeStream;
 
-struct ImportFunctionInsertVisitor
+template<typename InnerStream> struct OperatorStreamProxy
 {
     typedef void Result;
-    ImportFunctionInsertVisitor(IR::Module& irModule, std::string name) :
-        module(irModule), exportName(name) {}
+	InnerStream* innerStream;
+	OperatorStreamProxy(InnerStream* inInnerStream) : innerStream(inInnerStream) {}
+
+#define VISIT_OPCODE(_, name, _2, Imm, ...)                                                \
+	Result name(Imm imm = {}) { innerStream->name(imm); }
+	ENUM_OPERATORS(VISIT_OPCODE)
+#undef VISIT_OPCODE
+};
+
+struct ImportFunctionInsertVisitor : OperatorStreamProxy<CodeStream>
+{
+    ImportFunctionInsertVisitor(IR::Module& irModule, std::string name, CodeStream* inInnerStream) :
+        OperatorStreamProxy<CodeStream>(inInnerStream), module(irModule), exportName(name) {}
 
     ~ImportFunctionInsertVisitor() {}
-    CodeStream* encoderStream;
     IR::Module& module;
     std::string exportName;
     Uptr insertedIndex;
 
-#define VISIT_OP(encoding, name, nameString, Imm, _4, _5)       \
-    Result name(Imm imm) {                                      \
-         encoderStream->name(imm);                              \
-    }
-    ENUM_NONCONTROL_NONPARAMETRIC_OPERATORS(VISIT_OP)
-#undef VISIT_OP
-
     Result unknown(Opcode) {}
     Result block(ControlStructureImm imm)
     {
-        encoderStream->block(imm);
+        innerStream->block(imm);
         pushControlStack(ControlContext::Type::block, "");
     }
 
     Result loop(ControlStructureImm imm)
     {
-        encoderStream->loop(imm);
+        innerStream->loop(imm);
         pushControlStack(ControlContext::Type::loop, "");
     }
 
     Result if_(ControlStructureImm imm)
     {
-        encoderStream->if_(imm);
+        innerStream->if_(imm);
         pushControlStack(ControlContext::Type::ifThen, "");
     }
 
     Result else_(NoImm imm)
     {
-        encoderStream->else_(imm);
+        innerStream->else_(imm);
         controlStack.back().type = ControlContext::Type::ifElse;
     }
 
     Result end(NoImm imm)
     {
-        encoderStream->end(imm);
+        innerStream->end(imm);
         controlStack.pop_back();
     }
 
     Result try_(ControlStructureImm imm)
     {
-        encoderStream->try_(imm);
+        innerStream->try_(imm);
         pushControlStack(ControlContext::Type::try_, "");
     }
 
     Result catch_(ExceptionTypeImm imm)
     {
-        encoderStream->catch_(imm);
+        innerStream->catch_(imm);
         controlStack.back().type = ControlContext::Type::catch_;
     }
 
     Result catch_all(NoImm imm)
     {
-        encoderStream->catch_all(imm);
+        innerStream->catch_all(imm);
         controlStack.back().type = ControlContext::Type::catch_;
     }
 
-    Result unreachable(NoImm imm)
-    {
-        encoderStream->unreachable(imm);
-    }
-
-    Result br(BranchImm imm)
-    {
-        encoderStream->br(imm);
-    }
-
-    Result br_if(BranchImm imm)
-    {
-        encoderStream->br_if(imm);
-    }
-
-    Result br_table(BranchTableImm imm)
-    {
-        encoderStream->br_table(imm);
-    }
-
-    Result return_(NoImm imm)
-    {
-        encoderStream->return_(imm);
-    }
-
-    // the only place should be updated
     Result call(FunctionImm imm)
     {
         if(imm.functionIndex >= insertedIndex)
             imm.functionIndex += 1;
-        encoderStream->call(imm);
+        innerStream->call(imm);
     }
 
-    Result call_indirect(CallIndirectImm imm)
-    {
-        encoderStream->call_indirect(imm);
-    }
-
-    Result drop(NoImm imm)
-    {
-        encoderStream->drop(imm);
-    }
-
-    Result select(NoImm imm)
-    {
-        encoderStream->select(imm);
-    }
-
-    Result local_set(GetOrSetVariableImm<false> imm)
-    {
-        encoderStream->local_set(imm);
-    }
-
-    Result local_get(GetOrSetVariableImm<false> imm)
-    {
-        encoderStream->local_get(imm);
-    }
-
-    Result local_tee(GetOrSetVariableImm<false> imm)
-    {
-        encoderStream->local_tee(imm);
-    }
-
-    Result global_set(GetOrSetVariableImm<true> imm)
-    {
-        encoderStream->global_set(imm);
-    }
-
-    Result global_get(GetOrSetVariableImm<true> imm)
-    {
-        encoderStream->global_get(imm);
-    }
-
-    Result table_get(TableImm imm)
-    {
-        encoderStream->table_get(imm);
-    }
-
-    Result table_set(TableImm imm)
-    {
-        encoderStream->table_set(imm);
-    }
-
-    Result table_grow(TableImm imm)
-    {
-        encoderStream->table_grow(imm);
-    }
-
-    Result table_fill(TableImm imm)
-    {
-        encoderStream->table_fill(imm);
-    }
-
-    Result throw_(ExceptionTypeImm imm)
-    {
-        encoderStream->throw_(imm);
-    }
-
-    Result rethrow(RethrowImm imm)
-    {
-        encoderStream->rethrow(imm);
-    }
+    Result ref_func(FunctionImm imm)
+	{
+		if(imm.functionIndex >= insertedIndex) { ++imm.functionIndex; }
+		innerStream->ref_func(imm);
+	}
 
     void AddImportedFunc();
 
@@ -243,16 +156,16 @@ void ImportFunctionInsertVisitor::AddImportedFunc()
         FunctionDef& functionDef = module.functions.defs[i];
         Serialization::ArrayOutputStream functionCodes;
         OperatorEncoderStream  encoder(functionCodes);
-        encoderStream = new CodeValidationProxyStream<OperatorEncoderStream>(
+        innerStream = new CodeValidationProxyStream<OperatorEncoderStream>(
                 module, functionDef, encoder);
 
         OperatorDecoderStream decoder(functionDef.code);
         pushControlStack(
                 ControlContext::Type::function, "");
         while(decoder && controlStack.size()){ decoder.decodeOp(*this); }
-        encoderStream->finishValidation();
+        innerStream->finishValidation();
         functionDef.code = functionCodes.getBytes();
-        delete encoderStream;
-        encoderStream = nullptr;
+        delete innerStream;
+        innerStream = nullptr;
     }
 }

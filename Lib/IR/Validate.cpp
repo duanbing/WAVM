@@ -18,7 +18,7 @@
 #include "WAVM/Inline/HashSet.h"
 #include "WAVM/Logging/Logging.h"
 
-#define ENABLE_LOGGING 1
+#define ENABLE_LOGGING 0
 
 using namespace WAVM;
 using namespace WAVM::IR;
