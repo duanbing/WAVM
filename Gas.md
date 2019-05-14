@@ -7,12 +7,14 @@ at the beginning of each [basic block](https://en.wikipedia.org/wiki/Basic_block
 i64.const ${gas_counter}
 call $add_gas_func
 ```
-the `add_gas_func`` accepts one parameter gas_counter to count all the instruction's gas cost of a basic block, 
-and declared as below:
+And `add_gas_func`` accepts one parameter `gas_counter` to count all the instruction's gas cost in currerent basic block, 
+which is declared as below:
+
 ```
 type (;1;) (func (param i32 i32))
 (import "env" "_add_gas" (func (;0;) (type 1)))
 ```
+in wast file.
 
 Then, walk all the branch instructions ([block, if, else, loop, br, br_if, br_table, loop, return, end]) by a stack in every defined funtion in wasm module,
 and insert metering instructions behind.
@@ -30,7 +32,8 @@ here we choose the first one as default, but we also have a small update accodin
 
 And we only support wasm-MVP instruction set now.
 
-The whole idea works as below:
+
+This whole process run as below:
 
 ```
 insert add_gas function -> compile c/c++ to wasm -> insert metering instructions -> set gas limit -> run wasm module 
@@ -50,7 +53,7 @@ the implementation code is in `Programs/wavm-as/insert-imported-context.h`.
 
 For example:
 ```
-emcc gas.c -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
+emcc gas.cpp -Oz -s EXPORTED_FUNCTIONS='["_main","_add"]' -o gas.js
 ```
 `Oz` option will do full optimization, so the memory section probably is omitted, so transfer wasm to wast and add a memory section.
 
