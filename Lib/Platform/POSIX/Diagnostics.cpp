@@ -48,13 +48,13 @@ CallStack Platform::captureCallStack(Uptr numOmittedFramesFromTop)
 		else
 		{
 			unw_word_t ip;
-#if !defined(__MACH__)
 			errorUnless(!unw_get_reg(&cursor, UNW_REG_IP, &ip));
-#else
             unw_proc_info_t unw_proc;
             errorUnless(!unw_get_proc_info(&cursor, &unw_proc));
-            ip = unw_proc.start_ip;
-#endif
+            if (unw_proc.end_ip == ip)
+            {
+                ip = unw_proc.start_ip;
+            }
 			result.stackFrames.push_back(CallStack::Frame{ip});
 		}
 	}
