@@ -14,7 +14,7 @@ std::map<std::string, uint32_t> kGasCostTable = {
   {"br_unless"                   , 100000         },
   {"call"                        , 2              },
   {"call_host"                   , 100000         },
-  {"call_indirect"               , 100000         },
+  {"call_indirect"               , 3              },
   {"catch"                       , 100000         },
   {"catch_all"                   , 100000         },
   {"data"                        , 100000         },
