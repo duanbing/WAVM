@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 #include <initializer_list>
+#include <limits.h>
 #include <memory>
 #include <new>
 #include <string>
