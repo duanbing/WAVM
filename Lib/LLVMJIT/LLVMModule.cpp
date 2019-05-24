@@ -388,6 +388,7 @@ Module::Module(const std::vector<U8>& objectBytes,
 	Uptr pdataNumBytes = 0;
 	llvm::object::SectionRef xdataSection;
 	U8* xdataCopy = nullptr;
+#ifdef _WIN32
 	if(USE_WINDOWS_SEH)
 	{
 		for(auto section : object->sections())
@@ -416,6 +417,7 @@ Module::Module(const std::vector<U8>& objectBytes,
 			}
 		}
 	}
+#endif
 
 	// Use the LLVM object loader to load the object.
 	std::unique_ptr<llvm::RuntimeDyld::LoadedObjectInfo> loadedObject = loader.loadObject(*object);

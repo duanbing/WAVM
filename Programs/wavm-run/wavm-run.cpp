@@ -378,7 +378,7 @@ static int run(const CommandLineOptions& options)
 	if(options.enableEmscripten)
     {
         Log::printf(Log::debug,
-                "gas used: %llu",
+                "gas used: %" PRIu64 "",
                 Emscripten::getGasUsed(emscriptenInstance));
     }
 

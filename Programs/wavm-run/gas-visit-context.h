@@ -40,7 +40,6 @@ struct GasVisitor {
     void gas_trap()
     {
         if (opEmitters.size() == 0) {
-            printf("gas=%llu, size=%lu\n",gasCounter, opEmitters.size());
             gasCounter = 0;
             return;
         }
