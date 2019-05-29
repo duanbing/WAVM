@@ -7,12 +7,13 @@ at the beginning of each [basic block](https://en.wikipedia.org/wiki/Basic_block
 i64.const ${gas_counter}
 call $add_gas_func
 ```
-And `add_gas_func`` accepts one parameter `gas_counter` to count all the instruction's gas cost in currerent basic block, 
+
+And `add_gas_func` accepts one parameter `gas_counter` to count all the instruction's gas cost in currerent basic block, 
 which is declared as below:
 
 ```
 type (;1;) (func (param i32 i32))
-(import "env" "_add_gas" (func (;0;) (type 1)))
+(import "env" "add_gas_func" (func (;0;) (type 1)))
 ```
 in wast file.
 
